@@ -1,0 +1,119 @@
+	구현되지 않은 상황
+		
+		A-2.1, A-3-a or A-3-b,A-4,A-5 B-2, C-1-1, C-1-2
+		
+		구현상세계획
+			
+			A-2.1
+			mr한뒤 mongodb, local file system 에 저장해두었던 large table을 hdfs에 대신 저장
+			
+			A-3-a or A-3-b
+			pyspark를 통해 hdfs에 있는 large table을 rdd로 접근
+			row단위 연산을 병령처리하여 새로운 large table 구축 후 hdfs에 저장(두 테이블 모두 사용한다)
+			혹은 서버 요청이 들어왔을때 spring-spark에서 한줄씩 연산하여 가져오기
+			(large table을 만들었다면 spring-spark 에서는 줄을 선택한 후 읽은 뒤 리스트 형으로 리턴 혹은 
+			distinct 연산만 실행할 계획)
+			
+			A-4
+			단어 검색 request가 controller에 들어왔을때 hdfs에서 단어-단어간 분석테이블에서 검색단어를 filter해서 추출
+			sort해서 상위 n개로 slice한뒤 스코어링 함수 호출 
+			spring-mongo의 news_analyze 컬렉션에서 값들을 hashmap으로 추출, 반복문 에서 상위 n개의 키워드와 맞는 단어 찾고 스코어에 + 연산
+			연산이 끝난 뒤 hashmap의 value를 score로 변경, values 기준으로 정렬한뒤 keys를리턴(biz에서 실행)
+			
+			A-5
+			A-4에서 리턴한 리스트중 상위 N개의 키를 리스트로 저장 후 HDFS의 문서-문서간 분석테이블에서 맞는 row를 뽑아온다
+			(row,col)(유사도)의 값이 일정 값이 넘는 뉴스 번호(키) 를 리스트로 저장한 뒤 리턴하기로한 keys(arraylist) 에서 diff 연산
+			후 controller에 전달
+			
+			
+			B-2
+			간단한 코드
+			
+			C-1-*
+			간단한 코드
+			
+			
+		
+			
+			
+			
+			
+	A-2.1
+	import pyspark
+	class pymatrixmk:
+	~~~~~~~~~~~~~~~~~~~~~~
+	~~~~~~~~~~~~~~~~~~~~~~
+	
+	df_t.write.csv("hdfs://192.168.56.104:9000/compath/"+date+ "/" )
+	
+	날짜별 merge
+	meg = sc.textFile("hdfs://192.168.56.104:9000/compath/tf_idf/res.csv")
+	for i in date_list
+		res = sc.textFile("hdfs://192.168.56.104:9000/compath/"+date+ "/" + regex("part~~~"))
+	#파일이 2개 이상 생기는 경우를 위해 파일 리스트로 받기
+		meg = join(meg,res,how="outer",leftindex=True,rightindex=True)
+		
+		
+	meg.write.csv("hdfs://192.168.56.104:9000/compath/tf_idf/res.csv",mod="overwrite")	
+	
+	
+	A-3-a or A-3-b
+	meg = sc.textFile("hdfs://192.168.56.104:9000/compath/tf_idf/res.csv")
+	res = def_make_cos_sim(meg)
+	res.write.csv("hdfs://192.168.56.104:9000/compath/cos_sim/res.csv",mod="overwrite")
+
+	A-4
+	file = hdfs.fs.("hdfs://192.168.56.104:9000/compath/tf_idf/res.csv")
+		.fiilter(function(@lambda){lambda x : x == req.getparameter("search_word")}).sort(asdasd).slice(0,n)
+	
+	list_key = file.getheader()
+	map indexmap = new hashmap()
+	for(stirng i : list_key) {
+		indexmap.put(i,file[req.getparameter("search_word"),i])
+	}
+	
+	score(map indexmap){
+		res = springmongo.con("localhost",27777).collection("news_analyze").find({},{"news_number" : 1 , "data" : 1})
+		ks = indexmap.keys()
+		map newmap = new hashmap()
+		for(map i : res){
+			kres = i.data.keys().intersect(ks)
+			int score = kres * indexmap.valuse()#psuedo ops
+			newmap.put(i.news_number,score)
+		}
+		
+		newmap.sortbyvalues(Sort.ASCENDING)
+		
+		return newmap
+		
+	}
+		
+	A-5
+	dist(map newmap){
+		lists = newmap.keys()
+		file = hdfs.fs.("hdfs://192.168.56.104:9000/compath/cos_sim/res.csv")
+		.fiilter(function(@lambda){lambda x : x == anyof lists elements }).sort(asdasd).slice(0,n)
+		sim_news = file.cols() //arraylist
+		new_list = lists.diff(sim_news)
+		
+		for( i : newmap){
+			if i.key().in(new_list){
+				continue
+			}else {
+				newmap.remove(i.key())
+			}
+			
+		}
+		
+		return newmap
+		
+		
+	}
+
+	
+
+
+
+
+
+	

@@ -1,0 +1,140 @@
+
+yarn resourcemanaget 리소스 매니저 실행
+
+# 하둡 명령어
+[hadoop@sunshiny bin]$ ./hadoop
+-- 실행시 정보 출력
+명령어	설명
+ namenode -format	 하둡 분산 파일 시스템 포맷 수행
+ 
+ secondarynamenode	 세컨더리 네임노드 실행
+ 
+ namenode	 네임노드 실행
+ 
+ datanode	 데이터노드 실행
+ 
+ dfsadmin	 하둡 분산 파일 시스템 관리자 실행
+ 
+ mradmin	 하둡 맵리듀스 관리자 실행
+
+ fsck	 하둡 분산 파일 시스템 검사 실행
+
+ fs	 하둡 분산 파일 시스템 클라이언트 실행
+
+ balancer	 하둡 분산 파일 시스템 재배치 실행
+
+ jobtracker	 하둡 맵리듀스 잡 트래커 실행
+
+ pipes	 파이프 잡 실행
+
+ tasktracker	 하둡 맵리듀스 태스크 트래커 실행
+
+ job	 하둡 맵리듀스의 잡 관리
+
+ queue	 하둡 맵리듀스의 잡큐 정보 출력
+
+ version	 하둡의 버전 정보 출력
+
+ jar <jar>	 jar 파일 실행
+
+ distcp <srcurl> <desturl> 
+
+ copy file or directories  reqcursively	 하둡 분산 파일 시스템의 파일이나 디렉터리를 
+  하위 디렉터리까지 포함하여 복사
+
+ classpath	 하둡 맵리듀스가 실행하는 jar 파일이나 필요한 라이브러리의 
+  경로 출력
+
+ daemonlog	 각 프로그램의 로그 레벨 정보를 출력하거나 변경
+
+
+
+# distcp : 원격지 또는 로컬 파일 복사
+
+문법 : distcp <HDFS 소스 URL> <HDFS 복사할 위치 URL> copy file or directories recursively
+
+hadoop distcp -p -update "hdfs://localhost:9000/user/hadoop/input" "hdfs://localhost:9000/user/hadoop/input2"
+
+# 하둡 설정 파일
+하둡 설정파일	설명
+ conf/masters	
+ 세컨더리 네임노드가 동작하는 노드를 명시
+ conf/slaves	 데이터노드와 태스크 트래커가 동작하는 노드를 명시
+ conf/hadoop-env.sh	 하둡이 실행하는 모든 프로세스에 적용되는 시스템 환경 관련 스크립틋
+ conf/core-site.xml	 하둡 분산 파일 시스템과 하둡 맵리듀스 모두에 적용할 수 있는 스크립트
+ conf/hdfs-site.xml	 하둡 분산 파일 시스템 설정 스크립트
+ conf/mapred-site.xml	 하둡 맵리듀스 설정 스크립트
+
+
+# hadoop-env.sh 환경설정 파라메터 정보
+파라메터	설명
+ HADOOP_CLASSPATH	 맵리듀스 프로그램을 실행할 때 외부 라이브러리를 참조하고 싶을 경우,
+  해당 라이브러리의 경로를 설정
+ HADOOP_HEAPSIZE	 하둡 데몬에서 사용할 메모리 크기.
+  기본 메모리 크기는 1,000MB(1GB)
+ HADOOP_SSH_OPTS	 하둡 클러스터 간에 SSH 연결을 할 때 추가로 사용할 옵션을 설정.
+ HADOOP_LOG_DIR	 하둡 데몬에서 생성되는 로그를 저장할 디렉토리를 설정.
+ 별도의 설정값이 없을 경우, 하둡 홈 디렉토리의 logs 디렉토리를 사용.
+ HADOOP_SLAVES	 데이터 노드가 등록된 파일 경로를 설정.
+  기본값은 하둡 홈 디렉토리의 conf에 있는 slaves 파일
+ HADOOP_MASTER	 보조 네임노드가 등록된 파일 경로를 설정.
+  기본값은 하둡 홈 디렉토리의 conf에 있는 master 파일의 정보를 참조.
+
+
+# 복제 데이터 개수 변경 : setrep
+ -R 옵션 사용시 하위 디렉토리에 있는 파일의 복제 데이터 개수도 변경됨.
+ - 사용법 : ./bin/hadoop fs -setrep [-R] -w [복제데이터 개수] [디렉토리 | 파일]
+
+hadoop fs -setrep -w 2 sample_data.txt
+
+# 휴지통 비우기 : expunge
+expunge 명령을 사용할 경우, 설정된 휴지통 데이터 삭제 주기와 상관없이 휴지통에 있는 데이터를 모두 삭제
+
+ - 사용법 : ./bin/hadoop fs -expunge
+
+
+
+# HDFS
+HDFS를 구동하기 위해서 네임노드가 될 한 대의 컴퓨터를 선정해야 한다.
+이번 경우는 속성 fs.default.name의 값이 HDFS 파일시스템 URI이고, 호스트는 네임노드의 호스트명이거나 IP 주소이고, 포트는 네임노드가 RPC를 받기 위해 대기하는 번호다.
+포트 번호가 정의되지 않으면 기본적으로 8020을 사용한다.
+
+fs.default.name은  기존 파일시스템을 지정하는 역할을 한다.
+기본 파일시스템은 상대 경로를 결정하기 위해서 사용되며, 상대 경로는 전체 경로를 일일이 지정하지 않아도 되므로 사용하기에 편하다(특정 네임노드의 주소를 하드코딩하는 것을 피할 수 있게 해준다).
+예를 들어 기본 파일시스템에서는 상대 URI /a/b는 hdfs://namenode/a/b 로 변환된다.
+
+
+# 하둡 데몬 주소와 포트 번호
+일반적으로 하둡 데몬은 데몬 간에 통신을 위한 RPC 서버와 사용자 인터페이스용 웹페이지를 제공하는 HTTP 서버를 실행시킨다.
+각 석버는 네트워크 주소와 요청을 받을 포트 번호로 구성된다.
+네트워크 주소를 0.0.0.0으로 하면 하둡은 모든 주소를 해당 컴퓨터에 바인딩할 것이다.
+다른 방법으로 단일 바인딩할 단일 주소를 지정할 수 있다.
+포트 번호 0은 서버가 사용되지 않는 포트 중 아무거나 선택할 수 있게 해준다.
+하지만 클러스터 간의 방화벽 정책에 부합되지 않을 수 있기 때문에 권장되지 않는 방법이다.
+
+ RPC 서버 속성
+속성명	기본값	설명
+ fs.default.name	 file:///	 HDFS URI로 설정되었을 때, 이 속성은 네임노드의 
+  RPC 서버주소와 포트 번호를 결정한다.
+  기본 포트 번호는 8020이다.
+ dfs.datanode.ipc.address
+ 0.0.0.0:50020
+ 데이터노드의 RPC 서버와 포트 번호다.
+ mapred.job.tracker	 Local	 호스트명과 포트 번호의 조합으로 설정되었을 때,
+  이 속성은 잡트래커의 RPC 서버 주소와 포트 번호를 결정한다.
+  자주 사용되는 포트 번호는 8021이다.
+ mapred.task.tracker.report.address	 127.0.0.1:0	 태스크 트래커의 RPC 서버와 포트 번호다.
+ 태스크 트래커의 자식 JVM과 태스크트래커가 통신하기 위해서 사용된다.
+  이 경우, 서버는 루프백 주소로 바인딩되기 때문에 
+  현재 미사용중이라면 어떤 번호라도 포트로 쓸 수 있다.
+
+RPC 서버가 있지만 데이터노드는 블록 전송을 위해서 추가로 TCP/IP 서버를 실행한다.
+서버 주소와 포트는 dfs.datanode.address 속성에 설정하며 기본값은 0.0.0.0:50010 이다.
+
+ HTTP 서버 속성
+속성명	기본값	설명
+ mapred.job.tracker.http.address	 0.0.0.0:50030	 잡트래커의 HTTP 서버 주소와 포트 번호
+ mapred.task.tracker.http.address	 0.0.0.0:50060	 태스크트래커의 HTTP 서버 주소와 포트 번호
+ dfs.http.address	 0.0.0.0:50070	 네임노드의 HTTP 서버 주소와 포트 번호
+ dfs.datanode.http.address	 0.0.0.0:50075	 데이터노드의 HTTP 서버 주소와 포트 번호
+ dfs.secondary.http.address	 0.0.0.0:50090	 보조 네임노드의 HTTP 서버 주소와 포트 번호

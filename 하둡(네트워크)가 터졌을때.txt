@@ -1,0 +1,84 @@
+
+fedora 계열 linux의 네트워크
+
+/etc/hosts -> os에서 dns 서버를 거치지 않고 변환할 host들을 등록한다
+	이곳에 등록된 호스트들은 dns서버에 연결되지 않은 상태에서도 domain만으로 ip를 찾아갈 수 있다
+	
+/etc/hosts.allow -> 이 운영체제 컨트롤할수 있는 권한이 있는 호스트들,
+	ssh 로 등록한 원격 호스트와는 별개이다
+	
+/etc/hosts.deny -> 이 운영체제에는 절대로 접근할 수 없는 호스트들
+
+/etc/udev/rules.d/70-persistance-net.rules
+	-> 네트워크 정책이 담겨있는 파일, ethernet 카드의 개수와 mac 주소를 알아봐야함,
+		삭제해도 network 재시작시 자동생성
+
+/etc/sysconfig/network
+	-> hostname와 gateway를 명시할 수 있다 지정하지 않으면 임의로 설정된다
+	
+/etc/sysconfig/network-scripts/ifcfg-eth~~
+	현재 작동중, 설정된 네트워크 인터페이스의 상세사항이 적여있는 파일
+
+/etc/sysconfig/network-scripts/	
+	network service 명령어들이 들어있는 디렉토리
+	ifconfig, ifup, ifdown ....
+
+ifconfig -> 현재 작동중인 네트워크 인터페이스의 상태를 나타내주는 명령어
+
+route -> 현재 작동중인 네트워크의 상태를 나타내주는 명령어, default 게이트웨이가 설정되어있는지 확인할것
+
+/etc/iptables -> ipv4의 방화벽 설정 , service iptables stop
+				iptables -L 방화벽 정책 확인
+
+/etc/ipv6tables -> ipv6 의 방화벽 설정
+
+
+
+
+포트 포워딩을 하지 않음 --> vbox에서 해결
+
+마스터를 등록하는 파일 $HADOOP_PREFIX/etc/hadoop/master , yarn-site.xml, core-site.xml
+
+slaves를 등록하는 파일 $HADOOP_PREFIX/etc/hadoop/slaves --> namenode가 가지고 있어야 함, yarn-site.xml 에도 등록할 수 있음
+
+* xml들은 모든 클러스터가 공유한다
+
+/etc/hosts --> 클러스터에 묶인 모든 호스트들, 클러스터에 등록된 모든 노드들이 가지고 있어야 함
+
+/etc/hosts.allow --> 내 아이피
+
+호스트 명을 주고 etc/passwd 를 필히 수정하여 이름을 맞추고 sudo usermod -md dir username으로 홈디렉토리 재지정
+
+ namenode.dir, datanode.dir의 권한이 755인지 확인
+ /etc/sys/... 70-network-permission.d 의 mac주소를 현재 연결된 주소만 남기고 다 지운 뒤 
+ ifcfg- 파일들에 HWADDR 속성으로 mac 주소를 명시적으로 바인딩
+	
+	맥주소가 vbox랑 일치하는지 확인
+	hadoop01
+	080027c56582
+	080027a7abf2
+
+	hadoop02
+	080027c56582
+	0800279d713d
+
+	hadoop03
+	080027c56582
+	080027e67269
+
+	hadoop04
+	080027c56582
+	080027ecad45
+
+
+datanode는 잡히는데 master:9000 연결이 refuse --> hadoop/logs에 가서 확인함
+	진단 -> hadoop/logs 에서 연결 시도한 시간의 로그를 찾아서 에러코드 확인
+	yum install telnet -> telnet localhost 9000 (server) 로 정말 포트가 막혔는지 확인 -> 열렸음
+	::1 에서 refuse 당하고 127.0.0.1 로 reconnect -> ::1: 이 문제인가싶어서 검색해보고 지움(ipv6을 사용할 일이 없기 때문에 선택)
+	
+	* /etc/hosts의 1,2라인에 localhost.localdomain...... 이게 너무 길면 인식을 못함
+	오류나면 -> 127.0.0.1 localhost 하나로 통일
+
+방화벽을 끌것
+-service iptables stop
+

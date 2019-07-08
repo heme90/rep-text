@@ -1,0 +1,219 @@
+
+
+하둡설치(아파치의 하둡으로가서)
+wget http://apache.tt.co.kr/hadoop/common/hadoop-2.6.5/hadoop-2.6.5.tar.gz
+https://hadoop.apache.org/docs/r2.6.5/
+
+설치 환경설정
+	
+	Oracle VirtualBox
+	Centos 6.5
+	master : 192.168.56.101 hostname : hadoop01
+	slave1 : 192.168.56.102 hostname : hadoop02
+	slave2 : 192.168.56.103 hostname : hadoop03
+	slave3 : 192.168.56.104 hostname : hadoop04
+	
+	slave 들은 master의 클론으로 생성한다
+
+머신 설정
+	
+	네트워크 -> 네트워크 어뎁터 1 : NAT , 포트포워딩 추가 SSH, TCP, 게스트포트 22, 호스트포트 22
+			 네트워크 어뎁터 2 : 호스트 전용 포트로 추가
+	
+압축파일을 푼다
+	
+	[hadoop@hadoop01 ~]$ tar xfvz hadoop-2.6.5.tar.gz
+
+파일 확인
+	
+	[hadoop@hadoop01 ~]$ ls
+		
+	>hadoop-2.6.5     jdk-8u211-linux-x64.rpm      hadoop-2.6.5.tar.gz 
+
+local로 복사한다.
+	
+	[hadoop@hadoop01 hadoop]# sudo cp -r hadoop-2.6.5 /usr/local/
+	
+	[hadoop@hadoop01 hadoop]# cd /usr/local
+심볼릭 링크를 건다.
+
+	[hadoop@hadoop01 local]# sudo ln -s hadoop-2.6.5 hadoop
+	[hadoop@hadoop01 local]# ls
+
+자바 버전, 위치 확인
+
+	[hadoop@hadoop01 local]# echo $JAVA_HOME
+	[hadoop@hadoop01 local]# alternatives --config java
+
+
+	java -version
+
+	javac -version
+
+
+
+host 등록
+	
+	[root@hadoop01 ~]# vi /etc/hosts
+	
+	/etc/hosts에 적어둔 호스트들은 dns서버와 통신하지 않아도 도메인만으로 연결할 수 있다
+	
+	192.168.56.101 hadoop01
+	192.168.56.102 hadoop02
+	192.168.56.103 hadoop03
+	192.168.56.104 hadoop04
+	[root@hadoop01 ~]# source /etc/hosts
+
+java path 지정
+		
+	[root@hadoop01 ~]# gedit /usr/local/hadoop-2.6.5/etc/hadoop/hadoop-env.sh
+		
+		export JAVA_HOME=${JAVA_HOME}
+		export JAVA_HOME=/usr/java/jdk1.8.0_211-amd64
+		
+	[root@hadoop01 ~]# source /usr/local/hadoop-2.6.5/etc/hadoop/hadoop-env.sh
+
+하둡의 전역 설정을 담당하는 xml
+
+	conf/core-site.xml
+	conf/hdfs-site.xml
+	conf/yarn-site.xml
+	conf/mapred-site.xml.
+
+core-site.xml 네임드노드  세팅
+	
+	<configuration>
+		<property>
+			<name>fs.defaultFS</name>
+			<value>hdfs://hadoop01:9000</value>
+		</property>
+	</configuration>
+	
+	기본 파일 시스템의 위치 지정, hadoop framework를 사용한 소스코드에서 파일 시스템을 사용하기 위해 
+	기본으로 참조할 수 있는 주소이다
+
+conf/mapred-site.xml 
+	
+	없으면 생성
+	
+	<configuration>
+		<property>
+			<name>mapred.job.tracker</name>
+			<value>hadoop01:54311</value>
+		</property>
+	</configuration>
+
+hdfs-site.xml
+
+	<configuration>
+		<property>
+			<name>dfs.datanode.data.dir</name>
+			<value>/hdata/dfs/name/data</value> //데이터노드의 위치
+		</property>
+		<property>
+			<name>dfs.namenode.name.dir</name>
+			<value>/hdata/dfs/name</value> // 네임노드의 위치
+		</property>
+		<property>
+			<name>dfs.replication</name>
+			<value>3</value> // 데이터블록의 복제셋 개수
+		</property>
+	</configuration>
+
+slaves
+	
+	hadoop/etc/hadoop/slaves 파일은 마스터 서버에서만 가지고 있어도 무방하다
+	
+	hadoop02
+	hadoop03
+	hadoop04
+
+master
+	
+	모든 노드들이 가지고 있어야 한다
+	
+	hadoop01
+
+
+/etc/environment 설정 (리눅스 파일시스템이 로딩되면서 먼저 읽어들이는 변수들, 설정 이후에 리부팅해서 확인해보아도 좋다)
+
+	JAVA_HOME="/usr/java/jdk1.8.0_211-amd64" //java는 rpm 파일을 직접 받아 localinstall했다
+	HADOOP_HOME="/usr/local/hadoop"
+	HADOOP_PREFIX="/usr/local/hadoop"
+	HADOOP_MAPRED_HOME="/usr/local/hadoop"
+	HADOOP_COMMON_HOME="/usr/local/hadoop"
+	HADOOP_HDFS_HOME="/usr/local/hadoop"
+	HADOOP_COMMON_LIB_NATIVE_DIR="/usr/local/hadoop/lib/native"
+	HADOOP_OPTS="-Djava.library.path=/usr/local/hadoop/lib"
+	#YARN_HOME="/usr/local/hadoop"
+	#YARN_CONF_DIR="/usr/local/hadoop/etc/hadoop"
+
+	[root@hadoop01 ~]# sudo mkdir -p /hdata/dfs/name/data
+	[root@hadoop01 ~]# sudo chown 755 /hdata
+	
+	리눅스의 기본 umask는 0022이기 때문에 hadoop dfs는 권한이 755임을 가정하고 만들어졌다
+
+마스터 서버를 복사
+
+	각각의 IP와 호스트 이름 변경 후 확인,  JAVA_HOME 확인
+	
+	호스트 이름 변경
+		
+		/etc/sysconfig/networks hostname = {수정}
+		
+	ipv4 변경
+		
+		/etc/sysconfig/network-scripts/ifcfg ~~ 중 BOOTPROTO=none인것을 찾아
+		IPADDR 속성 변경
+		
+	IPV4가 두개(네트워크 인터페이스가 두개) 필요한 이유
+		
+		VBOX 환경에서 할당 IP는 복제된 모든 머신이 같으므로 명시적으로 고정 아이피를 설정해주어야 서로
+		원할한 통신이 가능하다
+		
+		
+인증키 생성 및 공개키 전달
+
+	[root@hadoop01 ~]# ssh-keygen -t rsa
+	[root@hadoop01 ~]# cp id_rsa.pub authorized_keys
+	[root@hadoop01 .ssh]# ssh-copy-id -i root@hadoop02
+	[root@hadoop01 .ssh]# ssh-copy-id -i root@hadoop03
+	[root@hadoop01 .ssh]# ssh-copy-id -i root@hadoop04
+	
+	ssh-add
+
+확인
+	[root@hadoop01 .ssh]# ssh hadoop02 hostname
+	[root@hadoop01 .ssh]# ssh hadoop03 hostname
+	[root@hadoop01 .ssh]# ssh hadoop04 hostname
+
+하둡 초기화
+
+	$ cd /usr/local/hadoop-2.6.5/bin
+	$ ./hdfs namenode -format
+
+실행
+	
+	/usr/local/hadoop-2.6.5/sbin/start-all.sh
+	
+
+jps 데몬 확인
+
+	리소스 매니저
+	네임노드
+	jps
+	세컨더리 매니저
+
+테스트
+	
+	./hadoop fs -df -h
+
+PORT 열림을 확인
+	
+	netstat -tulpn | grep :22
+
+http 모니터링 주소
+	
+	http://hadoop01:50070  // 외부에서는 으로
+
+	http://192.168.56.101:50070

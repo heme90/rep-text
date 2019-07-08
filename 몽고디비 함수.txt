@@ -1,0 +1,89 @@
+/*
+* crp_nm_i 로 기업 정보와 공채속보 아이콘을 매핑해오는 함수
+*/
+
+db.system.js.save(
+   {
+     _id: "compfind",
+     value : function(c) {
+		var compdetail = db.dartdetail.find({"result.crp_nm_i" : c});
+		var imgurl = db.recruitok.find({"dhsopenempinfo.empBusiNm" : c} , {"_id" : 0 , "dhsopenempinfo.regLogImgNm" : 1});
+		var remap = new Map().set("compdetail",compdetail).set("imgurl",imgurl);
+		return remap;
+		}
+   }
+)
+compmap.get("compdetail");
+
+
+/*
+* dartdetail의 모든 컬럼과 dartsearch의 rcp_no를 가져가는 쿼리
+*/
+function aaa(crp_nm_i){
+	use api;
+	var compdetail = db.dartdetail.find({"crp_nm_i" :crp_nm_i});
+	var rcp_no = db.dartsearch({"crp_nm_i" :crp_nm_i},{"_id" : 0 , "rcp_no" : 1});
+	var returnmap = new Map();
+	returnmap.set("compdetail",compdetail);
+	returnmap.set("rcp_no",rcp_no);
+	return returnmap;
+}
+C:\Webwork\compathapi\recruitdetail
+mongoimport --db api --collection recruitdetail --file C:\\Webwork\\compathapi\\rdetailsample.json
+
+db.news_analyze.updateMany({$set : {"data" : function(data)}})
+
+
+db.news_analyze.find().forEach( function(data) {
+	var k = data["data"];
+	//k = ["aa","bb"]
+	var abc = new dict();
+	for(j in k){
+		abc[j]++;
+	}	
+	db.news_analyze.updateOne({"url" : data["url"]},{$set : {"data" : abc}});
+ });
+
+
+function news_reduce(){
+	var d = db.news_analyze.find();
+	for (var idx in d){
+		var k =  idx["data"];
+		var abc;
+		for(j in k){
+			abc[j[0]]++;
+		}	
+		db.news_analyze.updateOne({"url" : idx["url"]},{$set : {"data" : abc}});
+	}
+}	
+//시퀀스 지정
+var cnt = 0;
+
+db.news_main.find().sort({"_id" : 1}).forEach( function(data) {	
+	db.news_main.updateOne({"_id" : data["_id"]},{$set : {"news_number" : cnt}});
+	cnt += 1;
+ });
+
+//저장하고난뒤 뉴스넘버 업테이트
+
+max = db.news_main.find().sort("news_number" : -1).limit(1)[0]["news_number"]
+
+db.news_main.find({"news_number" : -1}).forEach(function(data) {	
+	db.news_main.updateOne({"_id" : data["_id"]},{$set : {"news_number" : max}});
+	max += 1;
+ });
+
+
+db.news_analyze.updateMany({},{$set : {"chk" : 0}})
+
+
+
+
+
+
+
+
+
+
+
+
