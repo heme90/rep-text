@@ -1,0 +1,140 @@
+상황
+
+몽고db에 데이터가 
+objectid : 123123
+category : sss
+url : 123123
+posttime : yyyymmdd
+data : [aa, bb, cc, dd, ee, ff, aa, cc, ff]
+
+
+해야하는일
+mongodb -> MR -> data가 reduce된 형태로 저장(mongodb or hdfs)
+		|
+		|
+		ㄴㅡ> columns == list of all url , rows == list of all nouns 인 dataframe 생성
+		
+
+case 1
+mr in hdfs, get -> make matrix
+
+in hdfs
+	
+	/compath
+		/news_analyze
+			/mapreduce
+				/posttime_yyyymmdd
+					/mr_{objcet_id or url}
+						/part-r-0000 >> aa 2
+									   bb 1
+									   cc 2
+									   dd 1
+									   ee 1
+									   ff 2
+					/mr_{objcet_id or url}'
+					
+					/mr_{objcet_id or url}''
+					
+					/mr_{objcet_id or url}'''
+				
+				/posttime_yyyymmdd'
+					/mr_{objcet_id or url}
+						/part-r-0000 >> aa 2
+									   bb 1
+									   cc 2
+									   dd 1
+									   ee 1
+									   ff 2
+					/mr_{objcet_id or url}'
+					
+					/mr_{objcet_id or url}''
+					
+					/mr_{objcet_id or url}'''
+				
+				
+				
+			/matrix_all
+				/part-r-0000
+				/part-r-0001
+				/part-r-0002 #save single dataframe.pkl
+				
+		
+hadoop get list of m-r-text
+			
+			list_dict = {"url" : urll, "data" : ["aa 2","bb 1","cc 2","dd 1","ee 1","ff 2"] , ...}
+			
+			class matrix_news():
+			
+				def load_df(self):				
+					if(os.system.exist("news_dataframe.pkl")):
+						df = pd.read_pickle("news_dataframe.pkl")
+					else: 
+						df =  pd.dataframe = []
+						
+					return df	
+						
+				def save_pkl(self):
+					self.df.to_pickle("news_dataframe.pkl")
+				
+				def news_mat(self,list_dict):
+					
+					for list_itr in list_dict:
+						news_itr(list_itr)
+				
+				def news_itr(self,list_itr):
+				
+					df = self.load_df()	
+					url = list_itr["url"]
+					dataitr = list_itr["data"]
+					df.addcol(url)
+					
+					for i in dataitr:
+						args = i.split(" ")
+						df[args[0]][url] += int(args[1])
+				
+			__init__
+				class.news_mat()
+				#after iteration of mr_{objectid or url series}
+				class.save_pkl()
+			
+				
+				
+			
+
+
+case 2
+mr in mongodb, find -> make matrix
+
+in hdfs	
+	/compath
+		/news_analyze
+			/matrix_all
+				/part-r-0000
+				/part-r-0001
+				/part-r-0002 #save single dataframe.pkl
+
+in mongo
+	["news"]
+		["news_mr"]
+			{
+			"_id" : ObjectId("5ce5ece9eb419c516c9bd9ff"),
+			"category" : "생활/문화",
+			"url" : "https://news.naver.com/main/read.nhn?mode=LS2D&mid=shm&sid1=103&sid2=241&oid=421&aid=0004003943",
+			"posttime" : "20190523",
+			"mr_data" : {"aa" : 2,"bb" : 1,"cc" : 2,"dd" : 1,"ee" : 1,"ff" : 2}
+			}
+			
+			
+		
+		
+		
+		
+		
+		
+		
+
+
+ 
+
+
+		

@@ -1,0 +1,28 @@
+db.news_main.find({$where : "500<this.contents.length<800"}).pretty()
+db.news_main.find({$where : "this.contents.length<300"}).pretty()
+{ $strLenCP: "abcde" }
+db.news_main.find({{ $strLenCP: "contents" } : {$gt : 300}}).pretty()
+
+db.news_main.find({$or : [{"this.contents.length" : {$gt : 500}},{"this.contents.length" : {$lt : 800}}]}).pretty()
+db.news_main.find({$and : [{"this.contents.length" : {$lt : 500}},{"this.contents.length":{$gt : 800}}]}).pretty()
+db.nes
+db.news_main.find(
+				{	$or :
+					[
+						{{$length : "contents"} : {$gt : 500} },
+						{$length : "contents"} : {$lt : 800} }
+					] 
+				}
+				 )
+
+"$strLenCP"
+
+db.news_main.deleteMany({$where : "this.contents.length<300"})
+
+.deleteMany(
+
+"{$or : [{$where : 'this.contents.length' : {$gt : 500},{$where : 'this.contents.length' : {$lt : 800}]}"
+
+db.news_main.updateMany({"news_number" : 1},{$set : {"chk" : 0}})
+db.news_main.updateMany({"c" : 0},{$unset : {"c" : 1}})
+db.news_main.find({"posttime" : "20190522"}).count()

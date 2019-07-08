@@ -1,0 +1,18 @@
+
+
+
+mount -t vboxsf share mount_point
+
+
+yum groupinstall Development Tools
+
+yum update
+
+reboot
+
+hadoop
+
+/usr/local/hadoop-2.6.5/etc/hadoop/site-conf.xml.....
+
+
+

@@ -1,0 +1,157 @@
+여러개의 파일을 DataFrame으로 받아들인 뒤, 서로다른 DataFrame을 하나로 합치는 방법은 2가지가 있다.
+
+1. 공통된 하나의 열(또는 행)을 기준으로, 동일한 값을 가지는 행을 각 DataFrame에서 찾은 뒤
+  n개 X m개 조합으로, 행을 모두 가지도록 합치는 경우 : merging(병합)
+
+2. 동일한 index나 columns을 가지고 있는 경우, 연속적으로 붙히기 : concatenating(연결)
+
+
+
+1. Merging(병합)
+필요한 패키지들을 import 한 뒤, 2개의 DataFrame을 생성하자
+df1에는 key열에 중복된 값이 들어가있고, df2에는 중복된 값이 없다는 것이 차이점이다.
+
+df1 = pd.DataFrame({"key": list("bbacaab"),
+                    "data1": range(7)})
+df2 = pd.DataFrame({"key": list("abd"),
+                    "data2": range(3)})
+
+2개의 DataFrame은 key라는 공통적인 열을 가지고 있다. 그리고  a, b, c, d 중 하나의 값을 가지게 된다.
+pandas에서 제공하는 pd.merge(df1, df2 , on="key") 함수를 실행해보자. on인자에는 공통적인 열명을 준다.
+예를 들어, df1에서 key열의 값이 b인 행을 보자. index 0, 1, 6행 3개가 있다. df2에서는 index1인 행 1개가 있다.
+3 – 1의 조합을 보면 총 3 X 1의 3가지 경우가 존재한다. 이에 해당하는 조합들 3개 모두를 merge된 df에는 가진다.
+또 예를 들면, key열의 a라는 값을 가지는 df1행은 index 2, 4, 5행이고 df2는 index 0행이다. 3 X 1해서 3개의 조합을 모두 가진다.
+나머지 key열의 값(c, d)들은 공통적인 값이 없기 때문에 생략된다.
+pd.merge(df1, df2, on="key")
+
+이제 추가적으로 how=”outer”라는 인자를 주어서, key열의 값 중 한쪽 DataFrame에만 있는 행들도 추가해준다. 없는 쪽의 값은 NaN으로 표시된다. 
+즉, key의값이 동일한 행들은 n X m조합 + 값이 동일한 행이 없는 경우는 NaN을 포함해서 추가
+pd.merge(df1, df2, on="key" , how = "outer")
+
+다음으로 인자를 how=”left” 로 주어보자. 그러면 왼쪽에 있는 df1이 기준이 되어 고정되고, df2는 동일한 키값을 가질 때마다, 여러번 달라 붙혀지게 된다. 
+만약 달라붙는 df2에 해당 key값이 없는 경우는 NaN으로 붙혀진다.
+pd.merge(df1, df2, on="key", how="left")
+
+마찬가지로 how=”rightt”를 주게 되면, df2는 고정된 상태에서, df1이 동일한 key값을 가지고 있을 때마다 달라 붙으며, 없는 경우 NaN으로 표시된다.
+
+
+
+이번에는 df1, df2 둘다 key열에 중복된 값을 가지는 데이터를 이용해보자.
+df3 = pd.DataFrame({"key": list("bbacaab"),
+                     "data1": range(7)})
+df4 = pd.DataFrame({"key": list("ababd"),
+                     "data2": range(5)})
+
+
+how인자에 inner를 넣으면, 넣지 않은 것과 동일하다. 공통된 값이 없으면 생략된다.
+pd.merge(df3, df4, on="key", how="inner")
+이제 각 df에 중복된 값이 존재하므로, 예를 들어 b를 보면, df3에는 3개, df4에는 2개의 행이 b를 포함하고 있다.
+그러므로 b에 대해서  3 x 2의 조합이 존재하게 된다. a의 경우도 2 x 2 로 총 4개의행을 가진다.
+
+마찬가지로 outer를 인자로 주면, 공통되지 않은 값들(c, d)도 NaN을 달고 추가된다.
+
+
+한편, 기준이 되는 열의 칼럼명이 key로 같지 않더라도, 각 df에서 기준의 열을 인자로 지정하여, merging을 수행할 수 도 있다.
+
+df5 = pd.DataFrame({"lkey": list("bbacaab"),
+                     "data1": range(7)})
+df6 = pd.DataFrame({"rkey": list("abd"),
+                     "data2": range(3)})
+
+
+pd.merge(df5, df6, left_on="lkey", right_on="rkey")를 수행하게 되면, 왼쪽df5의 lkey와 오른쪽 df6의 rkey를 기준으로 값이 같은 것들끼리 
+m x n 조합으로 나타나게 된다. 예를 들어, b의 경우 df5는 3개, df6은 1개로 총 3개의 행이 나타나는 것을 확인할 수 있다.
+
+
+
+이제, index를 기준으로 merging을 해보자.  
+먼저, 각각의 DataFrame의 열과 index를 merging해보자. key의 값들과 index의 값이 같을 때 가능하다.
+이 때, index를 기준으로 하는 df의 인자는 right_index=True를 줘서 index를 기준으로 설정할 수 있다.
+
+left1 = pd.DataFrame({'key': ['a', 'b', 'a', 'a', 'b', 'c'], 'value': range(6)})
+right1 = pd.DataFrame({'group_val': [3.5, 7]}, index=['a', 'b'])
+
+
+pd.merge(left1, right1, left_on="key", right_index=True)
+왼쪽인자에 들어가는 것은 _on=”열명”을 통해 열을 기준으로하고, 오른쪽인자는 _index=True를 통해 index명을 기준으로 놓으면 된다.
+left1의 key열에는 a가 3개, right1의 index에는 1개가 있으니, 3 x 1 개의 행이 나오는 것을 확인할 수 있다.
+
+이제 DataFrame 둘다 index를 기준으로 merging을 해보자.
+두 DataFrame의 index에 merging할 수 있는 값들이 명시되어 있는 것을 알 수 있다.
+(my : index기준으로 merging하면 공통된 index에 대해서 열들을 합칠 수 있다.how=outer를 주면 모든 행들을 합칠 수 있다. )
+left2 = pd.DataFrame([[1., 2.], [3., 4.], [5., 6.]], 
+                      index=['a', 'c', 'e'], columns=['Seoul', 'Incheon'])
+right2 = pd.DataFrame([[7., 8.], [9., 10.], [11., 12.], [13, 14]],
+                       index=['b', 'c', 'd', 'e'], columns=['Daegu', 'Ulsan'])
+
+
+pd.merge(left2, right2, how="outer", left_index=True, right_index=True)
+두 df 모두, index를 기준으로 merging하도록 옵션을 준다.  그리고 how=”outer”를 넣어서 공통된 값이 없는 행들도 표시되도록 해보자.
+
+
+
+
+
+Concatenating(연결)
+concatenating은  두 DataFrame을 행 방향(default로 할 시) or 열 방향으로 단순 연결하는 것을 의미한다.
+pd.merge()는 2개의 데이터를 콤마를 이용해서 넣어줬지만, pd.concat()는 리스트형식으로 연결한다.
+
+예시를 위해 3개의 Series를 만들자.
+
+s1 = pd.Series([0, 1], index=["a", "b"])
+s2 = pd.Series([2, 3, 4], index=["c", "d", "e"])
+s3 = pd.Series([5, 6], index=["f", "g"])
+
+
+pandas에서 제공하는concat()함수를 이용해서 리스트형식으로 넣어보자.
+pd.concat([s1, s2, s3]) 를 호출하면, 단순히 index가 증가하는 형태로 연결되어 새로운 Series가 생성된다.
+
+만약, axis=1을 인자로 주면, Series가 아닌, DataFrame의 형태로 각각 열 방향으로 연결된다. 
+이 때, 3개의 각 Series는 ab/ced/fg로 공유하는 index가 없었기 때문에, 칼럼들은 default하게 0부터 시작해서 총 3개의 열이 생성된다.
+pd.concat([s1, s2, s3] , axis= 1)
+
+이번에는 s1과 index는 같으면서 성분*5  +  s3를 행 방향으로 단순연결한 새로운 Series s4를 생성해서 concat()해보자
+s4 = pd.concat([s1 * 5, s3])
+
+
+s1과,  s1의 인덱스와 일부가 같은 s4를  열 방향(axis=1)으로 concat()해보자.
+pd.concat([s1, s4], axis=1) 의 경우, 동일한 index에 대해서는 첫번째 인자s1에다가 s4를 붙히는 것이다.
+index가 같은 a와 b부분에서는 자연스럽게 열방향으로 연결된다.
+
+여러개의 Series를 concat()로 연결할 때, DataFrame에다가 컬럼명을 명시해줄 수 있다.
+어차피 3개의 Series를 axis=1 로 concatenating한다면 3개의 열이 생길 것이다.
+각 열의 컬럼명을 keys=라는 인자로 지정해 줄 수 있다.
+pd.concat( [s1, s2, s3] , axis= 1, keys=["one", "two", "threes"] )
+
+
+
+
+
+DataFrame에 대해서도 동일한 방법으로 concatenating할 수 있다.
+
+df1 = pd.DataFrame(np.arange(6).reshape(3, 2), 
+                    index=['a', 'b', 'c'], columns=['one', 'two'])
+df2 = pd.DataFrame(5 + np.arange(4).reshape(2, 2), 
+                    index=['a', 'c'], columns=['three', 'four'])
+
+이 때, .reshape( 3 , 2) 함수를 이용해서, 0부터 5까지의 1차원 array를  3행x2열로 만들 수 있다.
+
+
+DataFrame 2개를 열 방향으로 단순연결해보자.
+pd.concat( [df1,df2], axis=1 )
+
+
+
+concat()함수를 호출할 때, ignore_index = 인자를 True로 넣어서, 기존index를 신경쓰지 않고 연결해보자.
+
+df3 = pd.DataFrame(np.random.randn(3, 4), columns=['a', 'b', 'c', 'd'])
+df4 = pd.DataFrame(np.random.randn(2, 3), columns=['b', 'd', 'a'])
+
+
+
+
+pd.concat([df3, df4], ignore_index=True) 를 통해, axis=1이 없으므로, 열 방향(행 으로 추가)으로 연결하면서
+기존 인덱스가 겹치는 0, 1을 무시하고, df3에 df4를 행으로 추가한다.
+만약 ignore_index 옵션이 없다면, 단순 연결의 index가 0, 1, 2, 0, 1 로 인덱스명 그대로 행에 추가된다.
+그러므로, 어떤 DataFrame을 행으로 단순 연결시킬 때는, ignore_index를 붙혀서 index를 첨부터 새로 붙게하여 자연스럽게 붙게하자.
+pd.concat([df3, df4], ignore_index=True)

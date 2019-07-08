@@ -1,0 +1,4 @@
+"C:\Program Files\MongoDB\Server\4.0\bin\mongod.exe" --config "C:\Program Files\MongoDB\Server\4.0\bin\mongod.cfg" --service
+
+c:\data\mydata>mongod --dbpath "c:\data\mydata" --logpath "c:\data\mydata\my.cfg" 
+--install --serviceName MyMongo --serviceDisplayName mymongo
